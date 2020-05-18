@@ -6,9 +6,11 @@ import java.util.concurrent.TimeUnit;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
 @AllArgsConstructor
+@EqualsAndHashCode
 public class ExpiryDelayedObject implements Delayed {
 
     private final String key;
@@ -24,5 +26,5 @@ public class ExpiryDelayedObject implements Delayed {
 	public long getDelay(TimeUnit unit) {
 		return unit.convert(expiryTime - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
 	}
-
+	
 }
