@@ -1,9 +1,8 @@
 package com.unacademy.cache.store;
 
 import java.lang.ref.SoftReference;
-import java.util.HashSet;
+import java.util.Date;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.DelayQueue;
 
@@ -47,6 +46,8 @@ public class CacheDataStore implements IGenericCache {
 			expiryObjectSet.put(key, edo);
 		}
 
+		System.out.println(cache.size());
+
 	}
 
 	@Override
@@ -57,12 +58,14 @@ public class CacheDataStore implements IGenericCache {
 		if (timeout <= 0)
 			cache.remove(key);
 		else {
+			long expiryTime = System.currentTimeMillis() + timeout;
 			if (expiryObjectSet.get(key) != null) {
 				expiryQueue.remove(expiryObjectSet.get(key));
-				ExpiryDelayedObject edo = new ExpiryDelayedObject(key, cache.get(key), timeout);
-				expiryQueue.put(edo);
-				expiryObjectSet.put(key, edo);
 			}
+			ExpiryDelayedObject edo = new ExpiryDelayedObject(key, cache.get(key), expiryTime);
+			expiryQueue.put(edo);
+			expiryObjectSet.put(key, edo);
+
 		}
 
 		return 1;
@@ -84,6 +87,16 @@ public class CacheDataStore implements IGenericCache {
 	@Override
 	public long size() {
 		return cache.size();
+	}
+
+	@Override
+	public ConcurrentHashMap<String, SoftReference<Object>> getMap() {
+		return cache;
+	}
+
+	@Override
+	public ConcurrentHashMap<String, ExpiryDelayedObject> expirySet() {
+		return expiryObjectSet;
 	}
 
 }

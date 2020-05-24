@@ -4,7 +4,6 @@ import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.http.client.HttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -14,6 +13,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.unacademy.cache.config.RestConnector;
+import com.unacademy.cache.service.HashingDistributionService;
 import com.unacademy.cache.store.ActiveCacheInstance;
 
 @Component
@@ -33,6 +33,9 @@ public class ClusterConnectionCheckJob {
 	@Autowired
 	Environment environment;
 
+	@Autowired
+	private HashingDistributionService hashService;
+
 	@Scheduled(fixedDelayString = "5000")
 	public void sendGossip() {
 
@@ -48,7 +51,7 @@ public class ClusterConnectionCheckJob {
 			for (String address : cacheInstance.getIps()) {
 				if ((ip.getHostAddress() + ":" + port).equals(address))
 					continue;
-				System.out.println(address+" gossip");
+				System.out.println(address + " gossip");
 				Map<String, String> entity = restConnector.getMessage("http://" + address + api, headers);
 				if (entity == null || !entity.get("responseBody").equals("true")) {
 					if (connection.get(address) != null && connection.get(address) < 2) {
@@ -70,7 +73,9 @@ public class ClusterConnectionCheckJob {
 	}
 
 	public void updateActiveNodesandHashing(String address) {
-		System.out.println("Node down "+address);
-
+		System.out.println("Node down " + address);
+		int degree = cacheInstance.getMap().remove(address);
+		System.out.println(cacheInstance.getMap().size());
+		hashService.reassignkeys(-degree, address);
 	}
 }
